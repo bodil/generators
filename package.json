@@ -1,0 +1,27 @@
+{
+  "name": "generators",
+  "version": "1.0.0",
+  "dependencies": {
+    "ansi-256-colors": "^1.1.0",
+    "babel-core": "^5.8.20",
+    "bluebird": "^2.9.34",
+    "codemirror": "^5.5.0",
+    "pink": "0.0.2",
+    "repr.js": "^0.1.0",
+    "webpack": "^1.10.5",
+    "webworker-loader": "^0.1.0"
+  },
+  "scripts": {
+    "start": "pink run slides.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bodil/generators.git"
+  },
+  "author": "Bodil Stokke",
+  "license": "GPL-3.0+",
+  "bugs": {
+    "url": "https://github.com/bodil/generators/issues"
+  },
+  "homepage": "https://github.com/bodil/generators#readme"
+}

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+
+    <title>generators are dashed jolly spiffy</title>
+    <meta name="author" content="Bodil Stokke">
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width">
+    <style type="text/css">
+body { visibility: hidden; background: black; }
+    </style>
+  </head>
+  <body>
+
+    <div id="slides" data-background="m/dog-monad.jpg">
+
+      <section class="nobg meme fill" data-background="m/hot-dog-dog.gif">
+        <p class="bottom">generators are dashed jolly spiffy<br><span style="font-size: 0.7em">@bodil</span></p>
+      </section>
+
+      <section data-jsrepl="text/javascript">
+        ponies = [
+          "Applejack",
+          "Fluttershy",
+          "Pinkie Pie",
+          "Rainbow Dash",
+          "Rarity",
+          "Twilight Sparkle"
+        ];
+      </section>
+
+      <section data-jsrepl="text/javascript">
+        ponies = {
+          [Symbol.iterator]: () => {
+            let c = 0;
+            return {
+              next: () => {
+                c += 1;
+                if (c === 1) return {value: "Pinkie Pie", done: false};
+                else if (c === 2) return {value: "Rainbow Dash", done: false};
+                else return {done: true};
+              }
+            };
+          }
+        };
+      </section>
+
+      <section data-jsrepl="text/javascript">
+        infinity = {
+          [Symbol.iterator]: () => {
+            let c = 0;
+            return { next: () => ({ value: c++, done: false }) };
+          }
+        };
+      </section>
+
+      <section data-jsrepl="text/javascript">
+        take = function(num, iterable) {
+          return {
+            [Symbol.iterator]: () => {
+              let count = 0, it = iterable[Symbol.iterator]();
+              return {
+                next: () => (count++ < num) ? it.next() : {done: true}
+              };
+            }
+          };
+        };
+
+        infinity = {
+          [Symbol.iterator]: () => {
+            let c = 0;
+            return { next: () => ({ value: c++, done: false }) };
+          }
+        };
+      </section>
+
+      <section data-jsrepl="text/javascript">
+        map = function(fn, iterable) {
+          return {
+            [Symbol.iterator]: () => {
+              const it = iterable[Symbol.iterator]();
+              return {
+                next: () => {
+                  const next = it.next();
+                  return next.done ? next : { done: false, value: fn(next.value) };
+                }
+              };
+            }
+          };
+        };
+
+        take = function(num, iterable) {
+          return {
+            [Symbol.iterator]: () => {
+              let count = 0, it = iterable[Symbol.iterator]();
+              return {
+                next: () => (count++ < num) ? it.next() : {done: true}
+              };
+            }
+          };
+        };
+
+        infinity = {
+          [Symbol.iterator]: () => {
+            let c = 0;
+            return { next: () => ({ value: c++, done: false }) };
+          }
+        };
+      </section>
+
+      <section data-jsrepl="text/javascript">
+        infinity = {
+          [Symbol.iterator]: () => {
+            let c = 0;
+            return { next: () => ({ value: c++, done: false }) };
+          }
+        };
+      </section>
+
+      <section data-jsrepl="text/javascript">
+        infinity = function*() {
+          let c = 0;
+          while (true) {
+            yield c++;
+          }
+        };
+      </section>
+
+      <section data-jsrepl="text/javascript">
+        take = function*(num, iter) {
+          let c = 0, next;
+          while (c++ < num && !(next = iter.next()).done) {
+            yield next.value;
+          }
+        };
+
+        infinity = function*() {
+          let c = 0;
+          while (true) {
+            yield c++;
+          }
+        };
+      </section>
+
+      <section data-jsrepl="text/javascript">
+        fiveup = function*() {
+          let c = 0;
+          while (true) {
+            c = yield c;
+            c = c + 5;
+          }
+        };
+      </section>
+
+      <section data-jsrepl="text/javascript">
+        unit = v => new Promise((res) => res(v));
+      </section>
+
+      <section data-jsrepl="text/javascript">
+        run = (iter, val) => {
+          const next = iter.next(val);
+          next.done || next.value.then(result => run(iter, result));
+        };
+      </section>
+
+      <section data-jsrepl="text/javascript">
+        run = (iter, val) => {
+          const next = iter.next(val);
+          next.done || next.value.then(result => run(iter, result));
+        };
+      </section>
+
+      <section data-jsrepl="text/javascript">
+        ponies = { pie: "Pinkie Pie", dash: "Rainbow Dash" };
+
+        things = function*() {
+          const dash = ponies.dash;
+          const pie = ponies.pie;
+          return dash + " is friends with " + pie;
+        }
+
+        run = (iter, val, done = Promise.defer()) => {
+          const next = iter.next(val);
+          if (next.done) {
+            done.resolve(next.value);
+          } else {
+            next.value.then(result => run(iter, result, done));
+          }
+          return done.promise;
+        };
+      </section>
+
+      <section data-highlight="on">
+        <h3>The Interface</h3>
+        <blockquote><pre class="typescript">
+interface Async&lt;A&gt; {
+
+ then: (f: (a: A) => Async&lt;B&gt;) => Async&lt;B&gt;;
+
+} </pre></blockquote>
+      </section>
+
+      <section data-highlight="on">
+        <h3>Let's Add a Wrapper</h3>
+        <blockquote><pre class="typescript">
+interface Async&lt;A&gt; {
+
+ unit: (value: A) => Async&lt;A&gt;;
+
+ then: (f: (a: A) => Async&lt;B&gt;) => Async&lt;B&gt;;
+
+} </pre></blockquote>
+      </section>
+
+      <section>
+        <h3>Let's Review</h3>
+        <ul>
+          <li class="fragment">We chain operations using <code>then</code>.</li>
+          <li class="fragment">We make the <code>then</code> chains go away using <code>yield</code>.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Let's Review</h3>
+        <p class="center">We can do this with anything which has a <code>then</code> method, not just promises!</p>
+      </section>
+
+      <section data-highlight="on">
+        <h4 style="margin-bottom: 0">Imagine a World</h4>
+        <h2 style="margin-top: 0">Without Callbacks</h2>
+        <blockquote><pre class="javascript">
+run(function*() {
+  const a = yield fs.readFile("a.txt");
+  const b = yield fs.readFile("b.txt");
+  yield fs.writeFile("both.txt", a + b);
+}); </pre></blockquote>
+      </section>
+
+      <section data-highlight="on">
+        <h3>Just Like Haskell</h3>
+        <blockquote><pre class="haskell">
+main = do
+  a <- readFile "a.txt"
+  b <- readFile "b.txt"
+  writeFile "both.txt" (a ++ b) </pre></blockquote>
+      </section>
+
+      <section>
+        <h3>Haskell is All Callbacks</h3>
+        <ul>
+          <li class="fragment">No side effects allowed.</li>
+          <li class="fragment">Therefore all side effects must be async!</li>
+        </ul>
+      </section>
+
+      <section data-highlight="on">
+        <h4 style="font-weight: normal">They were here 25 years ago.</h4>
+        <blockquote><pre class="javascript">
+function joinFiles(f1, f2, f3, callback) {
+  fs.readFile(f1, function(err, a) {
+    if (err) return callback(err);
+    fs.readFile(f2, function(err, b) {
+      if (err) return callback(err);
+      fs.writeFile(f3, a + b, callback);
+    });
+  });
+}</pre></blockquote>
+      </section>
+
+      <section class="nobg meme" data-background="m/moby-dick.jpg">
+        <p class="bottom small">until one man proposed a solution</p>
+      </section>
+
+      <section class="nobg meme">
+        <p class="bottom">monads</p>
+      </section>
+
+      <section>
+        <h3>You Have Seen</h3>
+        <ul>
+          <li class="fragment">The IO monad (<code>Promise</code>)</li>
+          <li class="fragment">The Maybe monad</li>
+        </ul>
+      </section>
+
+      <section data-highlight="on">
+        <h3>This Is a Monad</h3>
+        <blockquote><pre class="typescript">
+interface Monad&lt;A&gt; {
+
+ unit: (value: A) => Monad&lt;A&gt;;
+
+ bind: (f: (a: A) => Monad&lt;B&gt;) => Monad&lt;B&gt;;
+
+} </pre></blockquote>
+      </section>
+
+      <section data-highlight="on">
+        <h4 style="font-size: 0.95em">This Is Monad Comprehension</h4>
+        <blockquote><pre class="javascript">
+run(function*() {
+  const a = yield fs.readFile("a.txt");
+  const b = yield fs.readFile("b.txt");
+  yield fs.writeFile("both.txt", a + b);
+}); </pre></blockquote>
+      </section>
+
+      <section class="nobg meme fill" data-background="m/exeunt.gif">
+        <p class="bottom">that is all<br><span style="font-size: 0.7em">@bodil</span></p>
+      </section>
+
+    <script type="text/javascript" src="dist/pink/pink.js"></script>
+  </body>
+</html>
