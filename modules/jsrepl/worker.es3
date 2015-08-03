@@ -1,0 +1,110 @@
+require("babel-core/browser-polyfill");
+var represent = require("repr.js");
+var bluebird = require("bluebird");
+
+function isPromise(v) {
+  try {
+    return typeof v === "object" && typeof v["then"] === "function";
+  } catch(e) {
+    return false;
+  }
+}
+
+function isIterator(v) {
+  try {
+    return typeof v === "object" && typeof v["next"] === "function";
+  } catch(e) {
+    return false;
+  }
+}
+
+function isIterable(v) {
+  try {
+    return typeof v === "object" && typeof v[Symbol.iterator] === "function";
+  } catch(e) {
+    return false;
+  }
+}
+
+function expandIterator(v) {
+  var r, c = 0, out = [];
+  do {
+    c++;
+    r = v.next();
+    if (!r.done) {
+      out.push(r.value);
+    }
+  } while (c < 10 && !r.done);
+  return out.map(represent.repr).join(" ⇨ ") + ((r.done || v.next().done) ? "" : " ⇨ ...");
+}
+
+function repr(v) {
+  if (typeof v === "symbol") {
+    return v.toString();
+  }
+  return represent.repr(v);
+}
+
+function postRepr(expand, v) {
+  function p(v) {
+    postMessage(["result", v]);
+  }
+
+  if (expand) {
+    if (isIterator(v)) {
+      p(expandIterator(v));
+      return;
+    } else if (isIterable(v)) {
+      p(expandIterator(v[Symbol.iterator]()));
+      return;
+    } else if (isPromise(v)) {
+      v.then(function(i) { postRepr(expand, i); });
+      return;
+    }
+  }
+  if (isIterator(v)) {
+    p("<iterator>");
+  }
+  p(v === undefined ? undefined : repr(v));
+}
+
+function log() {
+  var l = Array.prototype.slice.call(arguments).map(function(v) {
+    return (typeof v === "string") ? v : repr(v);
+  }).join(" ");
+  postMessage(["log", l]);
+}
+
+var exports = {
+  Promise: bluebird,
+  console: {
+    log: log,
+    error: log,
+    info: log
+  }
+};
+
+onmessage = function(e) {
+  var data = e.data, output = false, expand = false;
+  if (data["eval"]) {
+    expand = data.expand;
+    data = data["eval"];
+    output = true;
+  } else if (data["load"]) {
+    data = data["load"];
+    output = false;
+  }
+  console.log(data);
+  try {
+    var res = eval("with (exports) { " + data + "}");
+    if (output && res !== "use strict") {
+      postRepr(expand, res);
+    }
+  } catch(e) {
+    console.error(e);
+    postMessage([
+      "error",
+      e.name + ": " + e.message
+    ]);
+  }
+};
