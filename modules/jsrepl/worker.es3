@@ -49,6 +49,9 @@ function postRepr(expand, v) {
   function p(v) {
     postMessage(["result", v]);
   }
+  function err(v) {
+    postMessage(["error", v]);
+  }
 
   if (expand) {
     if (isIterator(v)) {
@@ -58,9 +61,17 @@ function postRepr(expand, v) {
       p(expandIterator(v[Symbol.iterator]()));
       return;
     } else if (isPromise(v)) {
-      v.then(function(i) { postRepr(expand, i); });
+      v.then(function(i) {
+        postRepr(expand, i);
+      }).catch(function(e) {
+        postRepr(expand, e);
+      });
       return;
     }
+  }
+  if (v instanceof Error) {
+    err(v.name + ": " + v.message);
+    return;
   }
   if (isIterator(v)) {
     p("<iterator>");
