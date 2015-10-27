@@ -110,6 +110,50 @@
         };
       </section>
 
+      <section data-highlight="on">
+        <h3>Exercise!</h3>
+        <p>Write a <b>filter</b> function!</p>
+        <blockquote><pre class="javascript">
+
+&filter(i => i > 2, take(5, infinity));
+// 3 ⇨ 4 ⇨ 5
+        </pre></blockquote>
+      </section>
+
+      <section data-jsrepl="text/javascript">
+        map = function(fn, iterable) {
+          return {
+            [Symbol.iterator]: () => {
+              const it = iterable[Symbol.iterator]();
+              return {
+                next: () => {
+                  const next = it.next();
+                  return next.done ? next : { done: false, value: fn(next.value) };
+                }
+              };
+            }
+          };
+        };
+
+        take = function(num, iterable) {
+          return {
+            [Symbol.iterator]: () => {
+              let count = 0, it = iterable[Symbol.iterator]();
+              return {
+                next: () => (count++ < num) ? it.next() : {done: true}
+              };
+            }
+          };
+        };
+
+        infinity = {
+          [Symbol.iterator]: () => {
+            let c = 0;
+            return { next: () => ({ value: c++, done: false }) };
+          }
+        };
+      </section>
+
       <section data-jsrepl="text/javascript">
         infinity = {
           [Symbol.iterator]: () => {
@@ -117,6 +161,39 @@
             return { next: () => ({ value: c++, done: false }) };
           }
         };
+      </section>
+
+      <section data-jsrepl="text/javascript">
+        map = function*(fn, iter) {
+          let next;
+          while(!(next = iter.next()).done) {
+            yield fn(next.value);
+          }
+        };
+
+        take = function*(num, iter) {
+          let c = 0, next;
+          while (c++ < num && !(next = iter.next()).done) {
+            yield next.value;
+          }
+        };
+
+        infinity = function*() {
+          let c = 0;
+          while (true) {
+            yield c++;
+          }
+        };
+      </section>
+
+      <section data-highlight="on">
+        <h3>Exercise!</h3>
+        <p>Write the <b>filter</b> function using generators!</p>
+        <blockquote><pre class="javascript">
+
+&filter(i => i > 2, take(5, infinity()));
+// 3 ⇨ 4 ⇨ 5
+        </pre></blockquote>
       </section>
 
       <section data-jsrepl="text/javascript">
@@ -174,6 +251,32 @@
         };
       </section>
 
+      <section data-highlight="on">
+        <h3>Exercise!</h3>
+        <p>Make <b>run</b> handle errors!</p>
+        <blockquote><pre class="javascript">
+
+&run(fetchText("http://horse.ebooks/"));
+// TypeError: Failed to fetch
+        </pre></blockquote>
+      </section>
+
+      <section data-jsrepl="text/javascript">
+        run = (iter, val, done = Promise.defer()) => {
+          const next = iter.next(val);
+          if (!next.done) {
+            next.value.then(result => run(iter, result, done));
+          } else {
+            done.resolve(next.value);
+          }
+          return done.promise;
+        };
+
+        fetchText = function*(url) {
+          return yield (yield fetch(url)).text();
+        };
+      </section>
+
       <section data-jsrepl="text/javascript">
         ponies = { pie: "Pinkie Pie", dash: "Rainbow Dash" };
 
@@ -186,7 +289,57 @@
         run = (iter, val, done = Promise.defer()) => {
           const next = iter.next(val);
           if (!next.done) {
-            next.value.then(result => run(iter, result, done));
+            next.value.then(
+              result => run(iter, result, done),
+              error => done.reject(error)
+            );
+          } else {
+            done.resolve(next.value);
+          }
+          return done.promise;
+        };
+      </section>
+
+      <section data-highlight="on">
+        <h3>Exercise!</h3>
+        <p>Make <b>maybe</b> report errors!</p>
+        <blockquote><pre class="javascript">
+&run(pie());
+// "Rainbow Dash is friends with Pinkie Pie"
+
+&run(twi());
+// Error: undefined key: twi
+        </pre></blockquote>
+      </section>
+
+      <section data-jsrepl="text/javascript">
+        ponies = { pie: "Pinkie Pie", dash: "Rainbow Dash" };
+
+        maybe = (val) => ({
+          then: (fn) => val != null ? fn(val) : null
+        });
+
+        prop = (key, obj) => maybe(obj[key]);
+
+        pie = function*() {
+          const dash = yield prop("dash", ponies);
+          const pie = yield prop("pie", ponies);
+          return dash + " is friends with " + pie;
+        }
+
+        twi = function*() {
+          const dash = yield prop("dash", ponies);
+          const twi = yield prop("twi", ponies);
+          return dash + " is friends with " + twi;
+        }
+
+        run = (iter, val, done = Promise.defer()) => {
+          const next = iter.next(val);
+          if (!next.done) {
+            next.value.then(
+              result => run(iter, result, done),
+              error => done.reject(error)
+            );
           } else {
             done.resolve(next.value);
           }
