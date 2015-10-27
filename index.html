@@ -9,7 +9,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width">
     <style type="text/css">
-body { visibility: hidden; background: black; }
+      body { visibility: hidden; background: black; }
     </style>
   </head>
   <body>
@@ -120,15 +120,13 @@ body { visibility: hidden; background: black; }
       </section>
 
       <section data-jsrepl="text/javascript">
-        infinity = function*() {
-          let c = 0;
-          while (true) {
-            yield c++;
+        map = function*(fn, iter) {
+          let next;
+          while(!(next = iter.next()).done) {
+            yield fn(next.value);
           }
         };
-      </section>
 
-      <section data-jsrepl="text/javascript">
         take = function*(num, iter) {
           let c = 0, next;
           while (c++ < num && !(next = iter.next()).done) {
@@ -161,14 +159,18 @@ body { visibility: hidden; background: black; }
       <section data-jsrepl="text/javascript">
         run = (iter, val) => {
           const next = iter.next(val);
-          next.done || next.value.then(result => run(iter, result));
+          if (!next.done) {
+            next.value.then(result => run(iter, result));
+          }
         };
       </section>
 
       <section data-jsrepl="text/javascript">
         run = (iter, val) => {
           const next = iter.next(val);
-          next.done || next.value.then(result => run(iter, result));
+          if (!next.done) {
+            next.value.then(result => run(iter, result));
+          }
         };
       </section>
 
@@ -183,10 +185,10 @@ body { visibility: hidden; background: black; }
 
         run = (iter, val, done = Promise.defer()) => {
           const next = iter.next(val);
-          if (next.done) {
-            done.resolve(next.value);
-          } else {
+          if (!next.done) {
             next.value.then(result => run(iter, result, done));
+          } else {
+            done.resolve(next.value);
           }
           return done.promise;
         };
@@ -195,9 +197,9 @@ body { visibility: hidden; background: black; }
       <section data-highlight="on">
         <h3>The Interface</h3>
         <blockquote><pre class="typescript">
-interface Async&lt;A&gt; {
+interface <b>Async</b>&lt;A&gt; {
 
- then: (f: (a: A) => Async&lt;B&gt;) => Async&lt;B&gt;;
+  <b>then</b>: (f: (a: A) => Async&lt;B&gt;) => Async&lt;B&gt;;
 
 } </pre></blockquote>
       </section>
@@ -205,11 +207,11 @@ interface Async&lt;A&gt; {
       <section data-highlight="on">
         <h3>Let's Add a Wrapper</h3>
         <blockquote><pre class="typescript">
-interface Async&lt;A&gt; {
+interface <b>Async</b>&lt;A&gt; {
 
- unit: (value: A) => Async&lt;A&gt;;
+  <b>unit</b>: (value: A) => Async&lt;A&gt;;
 
- then: (f: (a: A) => Async&lt;B&gt;) => Async&lt;B&gt;;
+  <b>then</b>: (f: (a: A) => Async&lt;B&gt;) => Async&lt;B&gt;;
 
 } </pre></blockquote>
       </section>
@@ -273,28 +275,47 @@ function joinFiles(f1, f2, f3, callback) {
         <p class="bottom small">until one man proposed a solution</p>
       </section>
 
-      <section class="nobg meme">
-        <p class="bottom">monads</p>
+      <section class="nobg meme" style="font-size: 2.5em">
+        <p class="bottom">MONADS</p>
       </section>
 
-      <section>
-        <h3>You Have Seen</h3>
-        <ul>
-          <li class="fragment">The IO monad (<code>Promise</code>)</li>
-          <li class="fragment">The Maybe monad</li>
-        </ul>
+      <section data-highlight="on">
+        <h3>This Is a Monad</h3>
+        <blockquote><pre class="haskell">
+class <b>Monad</b> m where
+
+  <b>return</b> :: a -&gt; m a
+
+  (<b>&gt;&gt;=</b>) :: m a -&gt; (a -&gt; m b) -&gt; m b </pre></blockquote>
       </section>
 
       <section data-highlight="on">
         <h3>This Is a Monad</h3>
         <blockquote><pre class="typescript">
-interface Monad&lt;A&gt; {
+interface <b>Monad</b>&lt;A&gt; {
 
- unit: (value: A) => Monad&lt;A&gt;;
+  <b>unit</b>: (value: A) => Monad&lt;A&gt;;
 
- bind: (f: (a: A) => Monad&lt;B&gt;) => Monad&lt;B&gt;;
+  <b>then</b>: (f: (a: A) => Monad&lt;B&gt;) => Monad&lt;B&gt;;
 
 } </pre></blockquote>
+      </section>
+
+      <section>
+        <h3>You Have Seen</h3>
+        <ul>
+          <li class="fragment">The <b>IO</b> monad (<code>Promise</code>)</li>
+          <li class="fragment">The <b>Maybe</b> monad</li>
+        </ul>
+      </section>
+
+      <section data-highlight="on">
+        <h4 style="font-size: 0.95em">This Is Monad Comprehension</h4>
+        <blockquote><pre class="haskell">
+main = do
+  a <- readFile "a.txt"
+  b <- readFile "b.txt"
+  writeFile "both.txt" (a ++ b) </pre></blockquote>
       </section>
 
       <section data-highlight="on">
@@ -307,8 +328,21 @@ run(function*() {
 }); </pre></blockquote>
       </section>
 
+      <section data-highlight="on">
+        <h4>The Three Monad Laws</h4>
+        <blockquote><pre class="javascript">
+// §1. Left identity:
+      unit(a).then(f) ≡ unit(f(a));
+
+// §2. Right identity:
+         m.then(unit) ≡ m;
+
+// §3. Associativity:
+    m.then(f).then(g) ≡ m.then(a => g(f(a))); </pre></blockquote>
+      </section>
+
       <section class="nobg meme fill" data-background="m/exeunt.gif">
-        <p class="bottom">that is all<br><span style="font-size: 0.7em">@bodil</span></p>
+        <p class="bottom">that is all<br><span style="font-size: 0.7em">@bodil &mdash; http://bodil.lol/generators/</span></p>
       </section>
 
     <script type="text/javascript" src="dist/pink/pink.js"></script>

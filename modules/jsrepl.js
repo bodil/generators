@@ -201,6 +201,7 @@ export default function REPL(slide, mode) {
     this.console.on("command", this.evalCommand);
     this.console.on("loadBuffer", this.loadBuffer);
     this.console.on("focusOut", this.focusEditor);
+    this.console.on("escape", this.unfocus);
 
     this.cleanupHandler = events.on(window, "beforeunload", this.onTabClose, this);
     this.focusKeyHandler = events.on(window, "keydown", (e) => {

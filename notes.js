@@ -16,7 +16,7 @@ for (let i of ponies) console.log(i);
 
 //----------------
 
-i = ponies[Symbol.iterator];
+i = ponies[Symbol.iterator]();
 i.next();
 
 Array.from(ponies);
@@ -103,9 +103,11 @@ i.next(1337);
 i.next(NaN);
 i.next(-Infinity);
 
-run = (iter, val) => {
+run = (iter, val = null) => {
   const next = iter.next(val);
-  next.done || next.value.then(result => run(iter, result));
+  if (!next.done) {
+    next.value.then(result => run(iter, result));
+  }
 };
 
 run(promises());
@@ -126,13 +128,14 @@ run(fallout());
 
 //----------------
 
-// add done argument, then expand if block, then add return statement.
-run = (iter, val, done = Promise.defer()) => {
+// add done argument, expand if block,
+// ADD DONE TO THEN, add return statement.
+run = (iter, val = null, done = Promise.defer()) => {
   const next = iter.next(val);
-  if (next.done) {
-    done.resolve(next.value);
-  } else {
+  if (!next.done) {
     next.value.then(result => run(iter, result, done));
+  } else {
+    done.resolve(next.value);
   }
   return done.promise;
 };
@@ -148,15 +151,24 @@ run(fetchText("/data/fallout.txt"));
 
 // works for not just promises, but anything shaped like a promise
 
+&run(things());
+
 maybe = (val) => ({
   then: (fn) => val != null ? fn(val) : null
 });
 
 // ie. if val is null, we simply don't call the `then` callback,
 // and return null immediately instead.
-// the generator is just suspended indefinitely and eventually GCed.
+
+&maybe(5);
+&maybe(5).then(i => maybe(6));
+&maybe(null).then(i => maybe(6));
+&maybe("null").then(i => maybe(6));
 
 prop = (key, obj) => maybe(obj[key]);
+
+&prop("pie", ponies);
+&prop("twi", ponies);
 
 things = function*() {
   const dash = yield prop("dash", ponies);
@@ -164,3 +176,5 @@ things = function*() {
   //const twi = yield prop("twi", ponies);
   return dash + " is friends with " + pie;
 }
+
+&run(things());

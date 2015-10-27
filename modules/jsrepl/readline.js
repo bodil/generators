@@ -128,6 +128,8 @@ function ReadLine(opts) {
         this.histPos--;
         replace(this.history[this.histPos]);
       }
+    } else if (e.keyCode === 27) { // escape
+      this.emit("escape");
     }
   });
 
