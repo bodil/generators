@@ -25,19 +25,20 @@ Array.from(ponies);
 
 //----------------
 
-i = infinity[Symbol.iterator];
+i = infinity[Symbol.iterator]();
 for (let i of infinity) console.log(i); // nope!
 &infinity; // safe!
 
 //----------------
 
-for (i of take(5, infinity)) console.log(i);
 &take(5, infinity);
+for (let i of take(5, infinity)) console.log(i);
 
 //----------------
 
 &take(5, infinity);
 &map(i => i + 5, take(5, infinity));
+&take(5, map(i => i + 5, infinity));
 
 //----------------
 
@@ -51,8 +52,6 @@ infinity = function*() {
 i = infinity();
 i.next();
 &infinity();
-
-//----------------
 
 take = function*(num, iter) {
   let c = 0, next;
@@ -87,7 +86,7 @@ i.next(1000000);
 
 //----------------
 
-unit(5).then(i => console.log(i));
+unit(5).then(console.log);
 &unit(5);
 
 promises = function*() {
@@ -144,8 +143,8 @@ fetchText = function*(url) {
   return yield (yield fetch(url)).text();
 };
 
-run(fetchText("/data/novel.txt"));
-run(fetchText("/data/fallout.txt"));
+&run(fetchText("/data/novel.txt"));
+&run(fetchText("/data/fallout.txt"));
 
 //----------------
 
