@@ -156,60 +156,6 @@
         };
       </section>
 
-      <section data-jsrepl="text/javascript">
-        // Exercise 1 solution
-
-        filter = function(fn, iterable) {
-          return {
-            [Symbol.iterator]: () => {
-              const it = iterable[Symbol.iterator]();
-              return {
-                next: () => {
-                  while (true) {
-                    const next = it.next();
-                    if (next.done || fn(next.value)) {
-                      return next;
-                    }
-                  }
-                }
-              };
-            }
-          };
-        };
-
-        map = function(fn, iterable) {
-          return {
-            [Symbol.iterator]: () => {
-              const it = iterable[Symbol.iterator]();
-              return {
-                next: () => {
-                  const next = it.next();
-                  return next.done ? next : { done: false, value: fn(next.value) };
-                }
-              };
-            }
-          };
-        };
-
-        take = function(num, iterable) {
-          return {
-            [Symbol.iterator]: () => {
-              let count = 0, it = iterable[Symbol.iterator]();
-              return {
-                next: () => (count++ < num) ? it.next() : {done: true}
-              };
-            }
-          };
-        };
-
-        infinity = {
-          [Symbol.iterator]: () => {
-            let c = 0;
-            return { next: () => ({ value: c++, done: false }) };
-          }
-        };
-      </section>
-
       <section class="nobg meme fill" data-background="m/sidbagel.gif"></section>
 
       <section data-jsrepl="text/javascript">
@@ -256,40 +202,6 @@
 
       <section data-jsrepl="text/javascript">
         // Exercise 2
-
-        map = function*(fn, iter) {
-          let next;
-          while (!(next = iter.next()).done) {
-            yield fn(next.value);
-          }
-        };
-
-        take = function*(num, iter) {
-          let c = 0, next;
-          while (c++ < num && !(next = iter.next()).done) {
-            yield next.value;
-          }
-        };
-
-        infinity = function*() {
-          let c = 0;
-          while (true) {
-            yield c++;
-          }
-        };
-      </section>
-
-      <section data-jsrepl="text/javascript">
-        // Exercise 2 solution
-
-        filter = function*(fn, iter) {
-          let next;
-          while (!(next = iter.next()).done) {
-            if (fn(next.value)) {
-              yield next.value;
-            }
-          }
-        };
 
         map = function*(fn, iter) {
           let next;
@@ -379,25 +291,6 @@ Hint: Promise.then(successFn, errorFn)
       </section>
 
       <section data-jsrepl="text/javascript">
-        // Exercise 3 solution
-
-        run = (iter, val, done = Promise.defer()) => {
-          const next = iter.next(val);
-          if (!next.done) {
-            next.value.then(result => run(iter, result, done),
-                            err => done.reject(err));
-          } else {
-            done.resolve(next.value);
-          }
-          return done.promise;
-        };
-
-        fetchText = function*(url) {
-          return yield (yield fetch(url)).text();
-        };
-      </section>
-
-      <section data-jsrepl="text/javascript">
         ponies = { pie: "Pinkie Pie", dash: "Rainbow Dash" };
 
         things = function*() {
@@ -441,44 +334,6 @@ Hint: Promise.then(successFn, errorFn)
         });
 
         prop = (key, obj) => maybe(obj[key]);
-
-        pie = function*() {
-          const dash = yield prop("dash", ponies);
-          const pie = yield prop("pie", ponies);
-          return dash + " is friends with " + pie;
-        }
-
-        twi = function*() {
-          const dash = yield prop("dash", ponies);
-          const twi = yield prop("twi", ponies);
-          return dash + " is friends with " + twi;
-        }
-
-        run = (iter, val, done = Promise.defer()) => {
-          const next = iter.next(val);
-          if (!next.done) {
-            next.value.then(
-              result => run(iter, result, done),
-              error => done.reject(error)
-            );
-          } else {
-            done.resolve(next.value);
-          }
-          return done.promise;
-        };
-      </section>
-
-      <section data-jsrepl="text/javascript">
-        // Exercise 4 solution
-
-        ponies = { pie: "Pinkie Pie", dash: "Rainbow Dash" };
-
-        maybe = (val) => ({
-          then: (fn, err) => val instanceof Error ? err(val) : fn(val)
-        });
-
-        prop = (key, obj) => maybe(obj[key]
-                                   || new Error("undefined key: " + key));
 
         pie = function*() {
           const dash = yield prop("dash", ponies);
